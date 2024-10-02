@@ -1,75 +1,75 @@
 
-let heroes = [];
-let filteredHeroes = [];
-let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
-let currentHeroId = 1;
-const apiKey = '973d08d93973bf81a87693a000b50abb';
-const heroesPerLoad = 15; 
+let heróis = [];
+let heróisFiltrados = [];
+let favoritos = JSON.parse(localStorage.getItem('favoritos')) || [];
+let idAtualHeroi = 1;
+const chaveApi = '973d08d93973bf81a87693a000b50abb';
+const heróisPorCarregamento = 15; 
 
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetchHeroes(currentHeroId, heroesPerLoad);
-    displayFavorites(); 
+    buscarHeróis(idAtualHeroi, heróisPorCarregamento);
+    exibirFavoritos(); 
 
-   
+    
     document.getElementById('filter-input').addEventListener('input', function () {
-        const searchTerm = this.value.toLowerCase();
-        filteredHeroes = heroes.filter(hero => hero.name.toLowerCase().includes(searchTerm));
-        displayHeroes(filteredHeroes); 
+        const termoBusca = this.value.toLowerCase();
+        heróisFiltrados = heróis.filter(heroi => heroi.name.toLowerCase().includes(termoBusca));
+        exibirHeróis(heróisFiltrados);
     });
 
-   
+    
     window.addEventListener('scroll', () => {
         if (window.innerHeight + window.scrollY >= document.body.offsetHeight - 500) {
-            currentHeroId += heroesPerLoad;
-            fetchHeroes(currentHeroId, heroesPerLoad);
+            idAtualHeroi += heróisPorCarregamento;
+            buscarHeróis(idAtualHeroi, heróisPorCarregamento);
         }
     });
 });
 
 
-async function fetchHeroes(startId, amount) {
+async function buscarHeróis(idInicial, quantidade) {
     try {
-        const promises = [];
+        const promessas = [];
 
         
-        for (let i = startId; i < startId + amount; i++) {
-            promises.push(fetch(`https://www.superheroapi.com/api.php/${apiKey}/${i}`).then(res => res.json()));
+        for (let i = idInicial; i < idInicial + quantidade; i++) {
+            promessas.push(fetch(`https://www.superheroapi.com/api.php/${chaveApi}/${i}`).then(res => res.json()));
         }
 
-        
-        const newHeroes = await Promise.all(promises);
+       
+        const novosHeróis = await Promise.all(promessas);
 
         
-        const validHeroes = newHeroes.filter(hero => hero.response !== 'error');
-        heroes = [...heroes, ...validHeroes];
+        const heróisVálidos = novosHeróis.filter(heroi => heroi.response !== 'error');
+        heróis = [...heróis, ...heróisVálidos];
 
         
-        displayHeroes(filteredHeroes.length > 0 ? filteredHeroes : heroes);
-    } catch (error) {
-        console.error('Erro ao buscar heróis:', error);
+        exibirHeróis(heróisFiltrados.length > 0 ? heróisFiltrados : heróis);
+    } catch (erro) {
+        console.error('Erro ao buscar heróis:', erro);
     }
 }
 
 
-function displayHeroes(heroesToDisplay) {
-    const list = document.getElementById('heroes-list');
-    list.innerHTML = '';
+function exibirHeróis(heróisParaExibir) {
+    const lista = document.getElementById('heroes-list');
+    lista.innerHTML = '';
 
-   
-    heroesToDisplay.map(hero => {
+    
+    heróisParaExibir.map(heroi => {
         const item = document.createElement('div');
         item.className = 'hero-item';
         item.innerHTML = `
             <div class="hero-image-container">
-                <img src="${hero.image.url}" alt="${hero.name}" width="100">
+                <img src="${heroi.image.url}" alt="${heroi.name}" width="100">
                 <div class="hero-hover-info" style="display:none;">
-                    <p>Poder: ${hero.powerstats.power || 'Desconhecido'}</p>
+                    <p>Poder: ${heroi.powerstats.power || 'Desconhecido'}</p>
                 </div>
             </div>
-            <h3>${hero.name}</h3>
-            <button class="favorite-btn ${isFavorite(hero) ? 'active' : ''}">
-                ${isFavorite(hero) ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
+            <h3>${heroi.name}</h3>
+            <button class="favorite-btn ${ehFavorito(heroi) ? 'active' : ''}">
+                ${ehFavorito(heroi) ? 'Remover dos Favoritos' : 'Adicionar aos Favoritos'}
             </button>
         `;
 
@@ -88,40 +88,40 @@ function displayHeroes(heroesToDisplay) {
             hoverInfo.style.display = 'none'; 
         });
 
-        item.querySelector('.favorite-btn').addEventListener('click', () => toggleFavorite(hero));
-        list.appendChild(item);
+        item.querySelector('.favorite-btn').addEventListener('click', () => alternarFavorito(heroi));
+        lista.appendChild(item);
     });
 
     
-    if (heroesToDisplay.length === 0) {
-        list.innerHTML = '<p>Nenhum herói encontrado.</p>';
+    if (heróisParaExibir.length === 0) {
+        lista.innerHTML = '<p>Nenhum herói encontrado.</p>';
     }
 }
 
 
-function toggleFavorite(hero) {
-    if (isFavorite(hero)) {
-        favorites = favorites.filter(fav => fav.id !== hero.id);
+function alternarFavorito(heroi) {
+    if (ehFavorito(heroi)) {
+        favoritos = favoritos.filter(fav => fav.id !== heroi.id);
     } else {
-        favorites.push(hero);
+        favoritos.push(heroi);
     }
-    localStorage.setItem('favorites', JSON.stringify(favorites));
-    displayFavorites();
-    displayHeroes(filteredHeroes.length ? filteredHeroes : heroes);
+    localStorage.setItem('favoritos', JSON.stringify(favoritos));
+    exibirFavoritos();
+    exibirHeróis(heróisFiltrados.length ? heróisFiltrados : heróis);
 }
 
 
-function isFavorite(hero) {
-    return favorites.some(fav => fav.id === hero.id);
+function ehFavorito(heroi) {
+    return favoritos.some(fav => fav.id === heroi.id);
 }
 
 
-function displayFavorites() {
-    const list = document.getElementById('favorites-list');
-    list.innerHTML = '';
-    favorites.forEach(fav => {
+function exibirFavoritos() {
+    const lista = document.getElementById('favorites-list');
+    lista.innerHTML = '';
+    favoritos.forEach(fav => {
         const item = document.createElement('li');
         item.textContent = fav.name;
-        list.appendChild(item);
+        lista.appendChild(item);
     });
 }
